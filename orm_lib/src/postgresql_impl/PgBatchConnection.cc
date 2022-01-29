@@ -186,7 +186,7 @@ void PgConnection::pgPoll()
             if (status_ != ConnectStatus::Ok)
             {
                 status_ = ConnectStatus::Ok;
-                if (!PQbeginBatchMode(connectionPtr_.get()))
+                if (!PQenterPipelineMode(connectionPtr_.get()))
                 {
                     handleClosed();
                     return;
@@ -234,7 +234,7 @@ void PgConnection::execSqlInLoop(
 }
 int PgConnection::sendBatchEnd()
 {
-    if (!PQsendEndBatch(connectionPtr_.get()))
+    if (!PQpipelineSync(connectionPtr_.get()))
     {
         isWorking_ = false;
         handleFatalError(true);
@@ -389,7 +389,7 @@ void PgConnection::handleRead()
              * No more results from this query, advance to
              * the next result
              */
-            if (!PQgetNextQuery(connectionPtr_.get()))
+            if (!PQgetResult(connectionPtr_.get())) // psql 14+ pipeline mode
             {
                 return;
             }
@@ -397,12 +397,12 @@ void PgConnection::handleRead()
         }
         auto type = PQresultStatus(res.get());
         if (type == PGRES_BAD_RESPONSE || type == PGRES_FATAL_ERROR ||
-            type == PGRES_BATCH_ABORTED)
+            type == PGRES_PIPELINE_ABORTED) // psql 14+ pipeline mode
         {
             handleFatalError(false);
             continue;
         }
-        if (type == PGRES_BATCH_END)
+        if (type == PGRES_PIPELINE_SYNC) // psql 14+ pipeline mode
         {
             if (batchCommandsForWaitingResults_.empty() &&
                 batchSqlCommands_.empty())
