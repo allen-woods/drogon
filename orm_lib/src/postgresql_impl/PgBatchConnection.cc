@@ -49,6 +49,7 @@ bool checkSql(const string_view &sql_)
             sql.find("truncate") != std::string::npos ||
             sql.find("lock") != std::string::npos ||
             sql.find("create") != std::string::npos ||
+            sql.find("call") != std::string::npos ||
             sql.find("alter") != std::string::npos);
 }
 
@@ -389,7 +390,7 @@ void PgConnection::handleRead()
              * No more results from this query, advance to
              * the next result
              */
-            if (!PQgetResult(connectionPtr_.get())) // psql 14+ pipeline mode
+            if (!PQsendFlushRequest(connectionPtr_.get()))
             {
                 return;
             }
@@ -397,12 +398,12 @@ void PgConnection::handleRead()
         }
         auto type = PQresultStatus(res.get());
         if (type == PGRES_BAD_RESPONSE || type == PGRES_FATAL_ERROR ||
-            type == PGRES_PIPELINE_ABORTED) // psql 14+ pipeline mode
+            type == PGRES_PIPELINE_ABORTED)
         {
             handleFatalError(false);
             continue;
         }
-        if (type == PGRES_PIPELINE_SYNC) // psql 14+ pipeline mode
+        if (type == PGRES_PIPELINE_SYNC)
         {
             if (batchCommandsForWaitingResults_.empty() &&
                 batchSqlCommands_.empty())

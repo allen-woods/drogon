@@ -2,11 +2,9 @@
 
 int main()
 {
-    // psql 14+ pipeline mode
     PQenterPipelineMode(NULL);
     PQpipelineStatus(NULL);
-    PQgetResult(NULL);
+    PQpipelineSync(NULL);
     PQsendFlushRequest(NULL);
     PQexitPipelineMode(NULL);
-    PQgetResult(NULL);
 }
