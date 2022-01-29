@@ -2,11 +2,11 @@
 
 int main()
 {
-    PQisInBatchMode(NULL);
-    PQbatchIsAborted(NULL);
-    PQqueriesInBatch(NULL);
-    PQbeginBatchMode(NULL);
-    PQendBatchMode(NULL);
-    PQsendEndBatch(NULL);
-    PQgetNextQuery(NULL);
+    // psql 14+ pipeline mode
+    PQenterPipelineMode(NULL);
+    PQpipelineStatus(NULL);
+    PQgetResult(NULL);
+    PQsendFlushRequest(NULL);
+    PQexitPipelineMode(NULL);
+    PQgetResult(NULL);
 }
